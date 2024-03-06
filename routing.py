@@ -59,7 +59,6 @@ class PID():
                             )  # bounds on the integral
         return control_effort
 
-
 class TAMU_Controller(Node):
     def __init__(self):
         super().__init__('shape_drawer')
@@ -113,7 +112,7 @@ class TAMU_Controller(Node):
             self.msg.angular.z = float(
                 max(-self.max_rad, min(control, self.max_rad)))
             self.pub.publish(self.msg)
-            print("Angular CONTROL: ", control, " Set Piont: ", self.angle_PID.setpoint,
+            print("Angular CONTROL: ", control, " Set Point: ", self.angle_PID.setpoint,
                   " Pose: ", self.current_pose, " Message: ", self.msg)
             time.sleep(.05)  # Pose updates at 10 Hz
             controlArr[idx] = control
@@ -172,7 +171,6 @@ class TAMU_Controller(Node):
         else:
             self.get_logger().error('Failed to call set_pen service')
 
-
 def get_contours(im_pth):
     # opening the image and grayscaling it
     global image
@@ -193,7 +191,6 @@ def get_contours(im_pth):
     # cv.imshow("contour", image)
     # cv.waitKey()
     return contours
-
 
 def adjustContours(perimeter, bounds=[-5, 5, -5, 2.87]):
     # perimeter = np.asarray(perimeter, dtype = object)
@@ -235,7 +232,6 @@ def adjustContours(perimeter, bounds=[-5, 5, -5, 2.87]):
 
     return out
 
-
 def approximatePoly(contours):
     global image
     epsilon = 2
@@ -263,7 +259,7 @@ def PIDController(perimeter, origin=0.0):
     rclpy.init()
     controller = TAMU_Controller()
     # rclpy.spin(controller)
-    for contour in perimeter:
+    for contour in perimeter[::-1]:
         initial = True
         controller.set_pen(False)
         for point in contour:
