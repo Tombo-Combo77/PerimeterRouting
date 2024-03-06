@@ -197,7 +197,7 @@ class TAMU_Controller(Node):
     def move_point(self, point):
         self.goal_x = point[0]
         self.goal_y = point[1]
-        self.angular_controller()
+        #self.angular_controller()
         self.distance_controller()
 
     def pose_callback(self, data):
