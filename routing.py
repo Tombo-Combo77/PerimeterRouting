@@ -92,7 +92,7 @@ class TAMU_Controller(Node):
 
     def _angle(self, point):
         self.stop()
-        self.angle_PID.set_point(math.degrees(math.atan2((point[1]-self.current_pose.y),(point[0]-self.current_pose.x))))
+        self.angle_PID.set_point((math.atan2((point[1]-self.current_pose.y),(point[0]-self.current_pose.x))))
         control = np.inf
         while np.abs(control)>.01:
             rclpy.spin_once(self)
