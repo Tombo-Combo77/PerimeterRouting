@@ -101,9 +101,10 @@ class TAMU_Controller(Node):
         angle = (math.atan2(
             (point[1]-self.current_pose.y), (point[0]-self.current_pose.x)))
         if np.abs(angle-self.current_pose.theta) > math.pi:
-            angle = (angle+math.pi) % 2*math.pi
+            angle -= 2*math.pi
 
         self.angle_PID.set_point(angle)
+        print("ANGLE SET POINT: ", angle)
         controlArr = np.full([10], np.inf)  # Moving average filter
         idx = 0
         while np.abs(np.mean(controlArr)) > .01:
@@ -112,8 +113,8 @@ class TAMU_Controller(Node):
             self.msg.angular.z = float(
                 max(-self.max_rad, min(control, self.max_rad)))
             self.pub.publish(self.msg)
-            print("Angular CONTROL: ", control, " Set Point: ", self.angle_PID.setpoint,
-                  " Pose: ", self.current_pose, " Message: ", self.msg)
+            # print("Angular CONTROL: ", control, " Set Point: ", self.angle_PID.setpoint,
+            #       " Pose: ", self.current_pose, " Message: ", self.msg)
             time.sleep(.05)  # Pose updates at 10 Hz
             controlArr[idx] = control
             idx += 1
@@ -137,8 +138,8 @@ class TAMU_Controller(Node):
             self.msg.linear.x = control
             # self.msg.linear.y = control #This only uses
             self.pub.publish(self.msg)
-            print("Linear CONTROL: ", control, " Set Point: ",
-                  self.linear_PID.setpoint, " Pose: ", self.current_pose)
+            # print("Linear CONTROL: ", control, " Set Point: ",
+            #       self.linear_PID.setpoint, " Pose: ", self.current_pose)
             time.sleep(.05)  # Pose updates at 10 Hz
             controlArr[idx] = control
             idx += 1
