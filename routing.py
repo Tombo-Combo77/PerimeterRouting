@@ -100,6 +100,7 @@ class TAMU_Controller(Node):
 
     def _linear(self, point):
         self.stop()
+        print("Linear Point: ",point)
         self.linear_PID.set_point = point
         control = np.inf
         while control > .1:
