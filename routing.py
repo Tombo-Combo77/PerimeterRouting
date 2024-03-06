@@ -55,7 +55,7 @@ class PID():
 
         self.prev_error = error
 
-        self.integral = max(-1000, min(self.integral, 1000)
+        self.integral = max(-100, min(self.integral, 100)
                             )  # bounds on the integral
         return control_effort
 
@@ -71,7 +71,7 @@ class TAMU_Controller(Node):
 
         # Setting PID controller parameters
         self.angle_PID = PID(kp=.5, ki=.00, kd=.00, setpoint=0)
-        self.linear_PID = PID(kp=.4, ki=.00, kd=.5, setpoint=0)
+        self.linear_PID = PID(kp=.4, ki=.1, kd=.5, setpoint=0)
 
         # Setting bounds on the upper limits of the controller outputs
         self.max_rad = 17
@@ -139,8 +139,8 @@ class TAMU_Controller(Node):
             self.msg.linear.x = control
             # self.msg.linear.y = control #This only uses
             self.pub.publish(self.msg)
-            # print("Linear CONTROL: ", control, " Set Point: ",
-            #       self.linear_PID.setpoint, " Pose: ", self.current_pose)
+            print("Linear CONTROL: ", control, " Set Point: ",
+                  self.linear_PID.setpoint, " Pose: ", self.current_pose)
             time.sleep(.05)  # Pose updates at 10 Hz
             controlArr[idx] = control
             idx += 1
