@@ -98,6 +98,7 @@ class TAMU_Controller(Node):
 
     def _angle(self, point):
         self.stop()
+        rclpy.spin_once(self)
         angle = (math.atan2(
             (point[1]-self.current_pose.y), (point[0]-self.current_pose.x)))
         if np.abs(angle-self.current_pose.theta) > math.pi:
