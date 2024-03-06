@@ -109,6 +109,11 @@ class TAMU_Controller(Node):
 
         self.msg = Twist()
 
+        #Default Parameters
+        self.current_pose_x = 0
+        self.current_pose_y = 0
+        self.current_angle = 0
+
         # Initialize the service client to set pen
         self.set_pen_client = self.create_client(SetBool, 'set_pen')
         while not self.set_pen_client.wait_for_service(timeout_sec=1.0):
@@ -191,7 +196,6 @@ class TAMU_Controller(Node):
         self.distance_controller()
 
     def pose_callback(self, data):
-
         self.current_pose_x = data.x
         self.current_pose_y = data.y
         self.current_angle = data.theta
