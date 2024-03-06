@@ -165,15 +165,17 @@ class TAMU_Controller(Node):
             self.pub.publish(self.msg)
             
     def distance_controller(self):
-        self.distance = math.sqrt(math.pow(self.goal_x - self.current_pose_x , 2) + math.pow(self.goal_y - self.current_pose_y, 2 ))
+        distance = math.sqrt(math.pow(self.goal_x - self.current_pose_x , 2) + math.pow(self.goal_y - self.current_pose_y, 2 ))
         #self.R = math.sqrt(math.pow(self.current_pose_x - self.goal_x , 2) + math.pow(self.current_pose_y - self.goal_y , 2))
-        while self.distance > 0.15:
+        while distance > 0.15:
 
-            self.distance = math.sqrt(math.pow(self.goal_x - self.current_pose_x , 2) + math.pow(self.goal_y - self.current_pose_y, 2 ))
+            distance = math.sqrt(math.pow(self.goal_x - self.current_pose_x , 2) + math.pow(self.goal_y - self.current_pose_y, 2 ))
 
-            self.PID_distance = self.distance_PID.update(self.distance)
+            PID_distance_X = self.distance_PID.update(self.goal_x - self.current_pose_x)
+            PID_distance_Y = self.distance_PID.update(self.goal_y - self.current_pose_y)
 
-            self.msg.linear.x = self.PID_distance
+            self.msg.linear.x = PID_distance_X
+            self.msg.linear.y = PID_distance_Y
 
             self.pub.publish(self.msg)
 
