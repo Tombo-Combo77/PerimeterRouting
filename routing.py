@@ -12,9 +12,9 @@ global image
 
 class PID():
     def __init__(self, kp, ki, kd, setpoint=0):
-        self.Kp=kp
-        self.Ki=ki
-        self.Kd=kd
+        self.kp=kp
+        self.ki=ki
+        self.kd=kd
 
         self.setpoint=setpoint
             
