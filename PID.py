@@ -128,7 +128,6 @@ class TAMU_Controller(Node):
             else:
                 self.alpha = 2*3.14*math.acos((2*math.pow(self.R,2) - math.pow(self.C,2))/(2*math.pow(self.R,2)))
             
-            print self.alpha
             while self.alpha>0.005: 
                 self.R = math.sqrt(math.pow(self.current_pose_x - self.goal_x , 2) + math.pow(self.current_pose_y - self.goal_y , 2))
                 #print "dentro do while"
