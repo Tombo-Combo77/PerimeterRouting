@@ -99,7 +99,7 @@ class TAMU_Controller(Node):
             control = self.angle_PID.calculate_control(self.current_pose.theta)
             self.msg.angular.z = float(max(-self.max_rad, min(control, self.max_rad)))
             self.pub.publish(self.msg)
-            print("Angular CONTROL: ", control, " Set Piont: ", self.angle_PID.setpoint, " Pose: ", self.current_pose)
+            print("Angular CONTROL: ", control, " Set Piont: ", self.angle_PID.setpoint, " Pose: ", self.current_pose, " Message: ", self.msg)
             time.sleep(.1) #Pose updates at 10 Hz
         self.stop()
 
