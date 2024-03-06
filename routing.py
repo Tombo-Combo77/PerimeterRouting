@@ -84,7 +84,7 @@ def approximatePoly(contours):
     # cv.waitKey(0)
     return perimeter        
 
-def PIDController(lines, origin = 0.0):
+def PIDController(perimeter, origin = 0.0):
     """Taking in lines, this will create an object to navigate through all the points provided. It will turn the pen on as it is tracing.
 
     Args:
@@ -93,6 +93,16 @@ def PIDController(lines, origin = 0.0):
     """
     rclpy.init(args=args)
     controller = TAMU_Controller()
+
+    for contour in perimeter:
+        initial = True
+        controller.set_pen(False)
+        for point in contour:
+            # print("Point: ", point)
+            controller.move_point(point[0])
+            if initial:
+                initial = False
+                controller.set_pen(True)
 
     #TODO: Go through each contour, patching the edges together after turning the pen off. 
     rclpu.shutdown()

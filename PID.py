@@ -2,7 +2,7 @@
 # With minor adjustments
 import rclpy
 from rclpy.node import Node
-from geometry_msgs.msg import Twist
+from geometry_msgs.msg import Twist, Pose
 from std_srvs.srv import SetBool
 import math
 
@@ -169,16 +169,22 @@ class TAMU_Controller(Node):
                 self.pub.publish(self.msg)
 
         
-        def move_contour(self, contour):
-            #Need to iterate through every set of points in this contour
-            #Its a bunch of line segments, so there might need to be some adjustment for the corners to avoid rounding them off. 
-            for point in contour:
-                self.goal_x = point[:, 0]
-                self.goal_y = point[:, 1]
-                #NOTE: Might need to make it so that the angle lines up before the distance controller does anything
-                #TODO: Make it so the angular controller lines up before movement
-                self.angular_controller()
-                self.distance_controller()
+        # def move_contour(self, contour):
+        #     #Need to iterate through every set of points in this contour
+        #     #Its a bunch of line segments, so there might need to be some adjustment for the corners to avoid rounding them off. 
+        #     for point in contour:
+        #         self.goal_x = point[:, 0]
+        #         self.goal_y = point[:, 1]
+        #         #NOTE: Might need to make it so that the angle lines up before the distance controller does anything
+        #         #TODO: Make it so the angular controller lines up before movement
+        #         self.angular_controller()
+        #         self.distance_controller()
+
+        def move_point(self, point):
+            self.goal_x = point[0]
+            self.goal_y = point[1]
+            self.angular_controller()
+            self.distance_controller()
 
         def pose_callback(self, data):
 
