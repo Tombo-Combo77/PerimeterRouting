@@ -93,9 +93,10 @@ class TAMU_Controller(Node):
         self.stop()
         self.angle_PID.set_point(np.arctan((point[1]-self.current_pose.y)/(point[0]-self.current_pose.x)))
         control = np.inf
-        while control>.1:
+        while control>.01:
             control = self.angle_PID.calculate_control(self.current_pose.theta)
             self.msg.angular.z = float(max(-self.max_rad, min(control, self.max_rad)))
+            self.pub.publish(self.msg)
         self.stop()
 
     def _linear(self, point):
@@ -103,11 +104,12 @@ class TAMU_Controller(Node):
         print("Linear Point: ",point)
         self.linear_PID.set_point(point)
         control = np.inf
-        while control > .1:
+        while control > .01:
             control = self.linear_PID.calculate_control2D([self.current_pose.x, self.current_pose.y])
             control = float(max(-self.max_vel, min(control, self.max_vel)))
             self.msg.linear.x = control
             self.msg.linear.y = control
+            self.pub.publish(self.msg)
         self.stop()
 
     def move_point(self, point):
