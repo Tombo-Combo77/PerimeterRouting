@@ -99,13 +99,13 @@ class TAMU_Controller(Node):
         self.angle_PID = PID()
         self.distance_PID = PID()
 
-        self.angle_PID.setKp(1.4)
-        self.angle_PID.setKi(0)
-        self.angle_PID.setKd(0)
+        self.angle_PID.setKp(1.0)
+        self.angle_PID.setKi(.5)
+        self.angle_PID.setKd(.5)
 
-        self.distance_PID.setKp(1.4)
-        self.distance_PID.setKi(0)
-        self.distance_PID.setKd(0)
+        self.distance_PID.setKp(1.0)
+        self.distance_PID.setKi(.5)
+        self.distance_PID.setKd(.5)
 
         self.msg = Twist()
 
@@ -170,7 +170,6 @@ class TAMU_Controller(Node):
     def distance_controller(self):
         distance = math.sqrt(math.pow(self.goal_x - self.current_pose_x , 2) + math.pow(self.goal_y - self.current_pose_y, 2 ))
         #self.R = math.sqrt(math.pow(self.current_pose_x - self.goal_x , 2) + math.pow(self.current_pose_y - self.goal_y , 2))
-        print("Goals: ", self.goal_y, self.goal_x)
         while distance > 0.15:
 
             distance = math.sqrt(math.pow(self.goal_x - self.current_pose_x , 2) + math.pow(self.goal_y - self.current_pose_y, 2 ))
