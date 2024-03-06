@@ -290,7 +290,7 @@ def PIDController(perimeter, origin = 0.0):
         lines (_type_): array of contours, contains the line segments. 
         origin (float, optional): _description_. Defaults to 0.0. Dont know if this is necessary yet.
     """
-    rclpy.init(args=args)
+    rclpy.init()
     controller = TAMU_Controller()
 
     for contour in perimeter:
