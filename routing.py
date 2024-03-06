@@ -101,10 +101,13 @@ class TAMU_Controller(Node):
         rclpy.spin_once(self)
         angle = (math.atan2(
             (point[1]-self.current_pose.y), (point[0]-self.current_pose.x)))
-        if np.abs(angle-self.current_pose.theta) > math.pi:
-            print("GO Round")
-            angle -= 2*math.pi
-
+        
+        #Testing that the angle is in the proper direction
+        l2Ang = np.sqrt((np.cos(angle)+self.current_pose.x-point[0])**2 + (np.sin(angle)+self.current_pose.y-point[1])**2)
+        l2Base = np.sqrt((self.current_pose.x-point[0])**2 + (self.current_pose.y-point[1])**2)
+        if l2Ang>l2Base:
+            print("TEST FAILED********************************")
+            angle-=math.pi
         self.angle_PID.set_point(angle)
         print("ANGLE SET POINT: ", angle)
         controlArr = np.full([10], np.inf)  # Moving average filter
