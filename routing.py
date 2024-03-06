@@ -170,6 +170,7 @@ class TAMU_Controller(Node):
     def distance_controller(self):
         distance = math.sqrt(math.pow(self.goal_x - self.current_pose_x , 2) + math.pow(self.goal_y - self.current_pose_y, 2 ))
         #self.R = math.sqrt(math.pow(self.current_pose_x - self.goal_x , 2) + math.pow(self.current_pose_y - self.goal_y , 2))
+        print("Goals: ", self.goal_y, self.goal_x)
         while distance > 0.15:
 
             distance = math.sqrt(math.pow(self.goal_x - self.current_pose_x , 2) + math.pow(self.goal_y - self.current_pose_y, 2 ))
