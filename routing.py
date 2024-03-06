@@ -10,82 +10,49 @@ import math
 
 global image
 
-class PID:
-	"""
-	Discrete PID control
-	"""
+class PID():
+    def __init__(self, kp, ki, kd, setpoint=0):
+        self.Kp=kp
+        self.Ki=ki
+        self.Kd=kd
 
-	def __init__(self, P=2.0, I=0.0, D=1.0, Derivator=0, Integrator=0, Integrator_max=500, Integrator_min=-500):
+        self.setpoint=setpoint
+            
+        self.prev_error=0.0
+        self.integral = 0
 
-		self.Kp=P
-		self.Ki=I
-		self.Kd=D
-		self.Derivator=Derivator
-		self.Integrator=Integrator
-		self.Integrator_max=Integrator_max
-		self.Integrator_min=Integrator_min
+    #NOTE: Should move this to a decorator
+    def set_point(self, setpoint):
+        self.setpoint = setpoint
 
-		self.set_point=0.0
-		self.error=0.0
+    def calculate_control(self, current_value):
+        error = self.setpoint - current_value
 
-	def update(self, error):
-		"""
-		Calculate PID output value for given reference input and feedback
-		"""
+        self.integral += error
+        derivative = error - self.prev_error
 
-		self.error = error
+        control_effort = self.kp * error + self.ki * self.integral + self.kd * derivative
 
-		self.P_value = self.Kp * self.error
-		self.D_value = self.Kd * ( self.error - self.Derivator)
-		self.Derivator = self.error
+        self.prev_error = error
 
-		self.Integrator = self.Integrator + self.error
+        integral = max(-1000, min(integral, 1000)) #bounds on the integral
+        return control_effort
+    
+    #For linear movement, we take into account both X and Y
+    def calculate_control2D(self, current_value):
+        #Have to do L1 norm to maintain directionality
+        error = (self.setpoint[0] - current_value[0])+(self.setpoint[1] - current_value[1])
 
-		if self.Integrator > self.Integrator_max:
-			self.Integrator = self.Integrator_max
-		elif self.Integrator < self.Integrator_min:
-			self.Integrator = self.Integrator_min
+        self.integral += error
+        derivative = error - self.prev_error
 
-		self.I_value = self.Integrator * self.Ki
+        control_effort = self.kp * error + self.ki * self.integral + self.kd * derivative
 
-		PID = self.P_value + self.I_value + self.D_value
+        self.prev_error = error
 
-		return PID
-
-	def setPoint(self,set_point):
-		"""
-		Initilize the setpoint of PID
-		"""
-		self.set_point = set_point
-		self.Integrator=0
-		self.Derivator=0
-
-	def setIntegrator(self, Integrator):
-		self.Integrator = Integrator
-
-	def setDerivator(self, Derivator):
-		self.Derivator = Derivator
-
-	def setKp(self,P):
-		self.Kp=P
-
-	def setKi(self,I):
-		self.Ki=I
-
-	def setKd(self,D):
-		self.Kd=D
-
-	def getPoint(self):
-		return self.set_point
-
-	def getError(self):
-		return self.error
-
-	def getIntegrator(self):
-		return self.Integrator
-
-	def getDerivator(self):
-		return self.Derivator
+        integral = max(-1000, min(integral, 1000)) #bounds on the integral
+        return control_effort
+    
 
 class TAMU_Controller(Node):
     def __init__(self):
@@ -96,114 +63,55 @@ class TAMU_Controller(Node):
         self.sub = self.create_subscription(Pose2D, "/pose", self.pose_callback, 10) #What is the topic for returning the information? #What is the  datatype for Pose's location?
 
         # Setting PID controller parameters
-        self.angle_PID = PID()
-        self.distance_PID = PID()
+        self.angle_PID = PID(kp = .5, ki = .01, kd = .01, setpoint = 0)
+        self.linear_PID = PID(kp = .5, ki = .01, kd = .01, setpoint = 0)
 
-        self.angle_PID.setKp(1.0)
-        self.angle_PID.setKi(.5)
-        self.angle_PID.setKd(.5)
-
-        self.distance_PID.setKp(1.0)
-        self.distance_PID.setKi(.5)
-        self.distance_PID.setKd(.5)
+        #Setting bounds on the upper limits of the controller outputs
+        self.max_rad = 17
+        self.max_vel = 10
 
         self.msg = Twist()
 
         #Default Parameters
-        self.current_pose_x = 0
-        self.current_pose_y = 0
-        self.current_angle = 0
+        self.current_pose = None
 
         # Initialize the service client to set pen
         self.set_pen_client = self.create_client(SetBool, 'set_pen')
         while not self.set_pen_client.wait_for_service(timeout_sec=1.0):
             self.get_logger().info('set_pen service not available, waiting again...')
 
-    def angular_controller(self):
-        
-        self.R = math.sqrt(math.pow(self.current_pose_x - self.goal_x , 2) + math.pow(self.current_pose_y - self.goal_y , 2))
+    def stop(self):
+        self.msg.linear.x = 0
+        self.msg.linear.y = 0
+        self.msg.angular.z = 0
+        self.pub.publish(self.msg)
 
-        self.xr = self.R*math.cos(self.current_angle)
-        self.yr = self.R*math.sin(self.current_angle)
+    def _angle(self, point):
+        self.stop()
+        self.angle_PID.set_point = point
+        control = np.inf
+        while control>.1:
+            control = self.angle_PID.calculate_control(self.current_pose.theta)
+            self.msg.angular.z = max(-self.max_rad, min(control, self.max_rad)) 
+        self.stop()
 
-        self.xim = self.current_pose_x + self.xr
-        self.yim = self.current_pose_y + self.yr
-
-        self.C = math.sqrt(math.pow(self.xim - self.goal_x , 2) + math.pow(self.yim - self.goal_y , 2))
-
-        if self.xim > self.goal_x:
-
-            self.alpha = math.acos((2*math.pow(self.R,2) - math.pow(self.C,2))/(2*math.pow(self.R,2)))
-        else:
-            self.alpha = 2*3.14*math.acos((2*math.pow(self.R,2) - math.pow(self.C,2))/(2*math.pow(self.R,2)))
-        
-        while self.alpha>0.005: 
-            self.R = math.sqrt(math.pow(self.current_pose_x - self.goal_x , 2) + math.pow(self.current_pose_y - self.goal_y , 2))
-
-            self.xr = self.R*math.cos(self.current_angle)
-            self.yr = self.R*math.sin(self.current_angle)
-
-            self.xim = self.current_pose_x + self.xr
-            self.yim = self.current_pose_y + self.yr
-
-            self.C = math.sqrt(math.pow(self.xim - self.goal_x , 2) + math.pow(self.yim - self.goal_y , 2))
-            
-            if self.xim > self.goal_x:
-
-                self.alpha = math.acos((2*math.pow(self.R,2) - math.pow(self.C,2))/(2*math.pow(self.R,2)))
-            
-            else:
-                
-                self.alpha = 2*3.14*math.acos((2*math.pow(self.R,2) - math.pow(self.C,2))/(2*math.pow(self.R,2)))
-
-            self.alpha = math.acos((2*math.pow(self.R,2) - math.pow(self.C,2))/(2*math.pow(self.R,2)))
-
-            self.PID_angle = self.angle_PID.update(self.alpha)
-
-            #Testing
-            # self.msg.linear.x = 1.0
-            # self.msg.linear.y = 1.0
-            self.msg.angular.z = self.PID_angle
-
-            self.pub.publish(self.msg)
-            
-    def distance_controller(self):
-        distance = math.sqrt(math.pow(self.goal_x - self.current_pose_x , 2) + math.pow(self.goal_y - self.current_pose_y, 2 ))
-        #self.R = math.sqrt(math.pow(self.current_pose_x - self.goal_x , 2) + math.pow(self.current_pose_y - self.goal_y , 2))
-        while distance > 0.15:
-
-            distance = math.sqrt(math.pow(self.goal_x - self.current_pose_x , 2) + math.pow(self.goal_y - self.current_pose_y, 2 ))
-
-            PID_distance_X = self.distance_PID.update(self.goal_x - self.current_pose_x)
-            PID_distance_Y = self.distance_PID.update(self.goal_y - self.current_pose_y)
-
-            self.msg.linear.x = PID_distance_X
-            self.msg.linear.y = PID_distance_Y
-
-            self.pub.publish(self.msg)
-
-    
-    # def move_contour(self, contour):
-    #     #Need to iterate through every set of points in this contour
-    #     #Its a bunch of line segments, so there might need to be some adjustment for the corners to avoid rounding them off. 
-    #     for point in contour:
-    #         self.goal_x = point[:, 0]
-    #         self.goal_y = point[:, 1]
-    #         #NOTE: Might need to make it so that the angle lines up before the distance controller does anything
-    #         #TODO: Make it so the angular controller lines up before movement
-    #         self.angular_controller()
-    #         self.distance_controller()
+    def _linear(self, point):
+        self.stop()
+        self.linear_PID.set_point = point
+        control = np.inf
+        while control > .1:
+            control = self.linear_PID.calculate_control2D([self.current_pose.x, self.current_pose.y])
+            control = max(-self.max_vel, min(control, self.max_vel)) 
+            self.msg.linear.x = control
+            self.msg.linear.y = control
+        self.stop()
 
     def move_point(self, point):
-        self.goal_x = point[0]
-        self.goal_y = point[1]
-        #self.angular_controller()
-        self.distance_controller()
+        self._angle(point)
+        self._linear(point)
 
     def pose_callback(self, data):
-        self.current_pose_x = data.x
-        self.current_pose_y = data.y
-        self.current_angle = data.theta
+        self.current_pose = data
 
     # Helper functions
     def set_pen(self, value):
