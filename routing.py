@@ -7,7 +7,6 @@ from geometry_msgs.msg import Twist, Pose2D
 from std_srvs.srv import SetBool
 import math
 import time
-#from PID import TAMU_Controller #Class used for PID controller, going to pass it the lines in the contours
 
 global image
 
@@ -54,7 +53,6 @@ class PID():
         self.integral = max(-1000, min(self.integral, 1000)) #bounds on the integral
         return control_effort
     
-
 class TAMU_Controller(Node):
     def __init__(self):
         super().__init__('shape_drawer')
@@ -95,8 +93,7 @@ class TAMU_Controller(Node):
         self.angle_PID.set_point((math.atan2((point[1]-self.current_pose.y),(point[0]-self.current_pose.x))))
         controlArr = np.full([10], np.inf) #Moving average filter
         idx = 0
-        #while np.abs(np.mean(controlArr))>.01:
-        while np.abs(np.mean(controlArr))>.2:
+        while np.abs(np.mean(controlArr))>.01:
             rclpy.spin_once(self)
             control = self.angle_PID.calculate_control(self.current_pose.theta)
             self.msg.angular.z = float(max(-self.max_rad, min(control, self.max_rad)))
@@ -117,7 +114,7 @@ class TAMU_Controller(Node):
         idx = 0
         timeout = 1000 #iterations before angle gets readjusted. To compensate for drift
         #while np.abs(np.mean(controlArr)) > .01:
-        while np.abs(np.mean(controlArr)) > .2:
+        while np.abs(np.mean(controlArr)) > .01:
             rclpy.spin_once(self)
             #control = self.linear_PID.calculate_control2D([self.current_pose.x, self.current_pose.y])
             control = self.linear_PID.calculate_control(self.current_pose.x)
@@ -219,7 +216,7 @@ def adjustContours(perimeter, bounds = [-5, 5, -5, 2.87]):
 
 def approximatePoly(contours):
     global image
-    epsilon = .005
+    epsilon = .05
     perimeter = []
     for contour in contours:
         perimeter.append(cv.approxPolyDP(contour, epsilon, True))
