@@ -114,8 +114,25 @@ class TAMU_Controller(Node):
         while not self.set_pen_client.wait_for_service(timeout_sec=1.0):
             self.get_logger().info('set_pen service not available, waiting again...')
 
-        def angular_controller(self):
-            
+    def angular_controller(self):
+        
+        self.R = math.sqrt(math.pow(self.current_pose_x - self.goal_x , 2) + math.pow(self.current_pose_y - self.goal_y , 2))
+
+        self.xr = self.R*math.cos(self.current_angle)
+        self.yr = self.R*math.sin(self.current_angle)
+
+        self.xim = self.current_pose_x + self.xr
+        self.yim = self.current_pose_y + self.yr
+
+        self.C = math.sqrt(math.pow(self.xim - self.goal_x , 2) + math.pow(self.yim - self.goal_y , 2))
+
+        if self.xim > self.goal_x:
+
+            self.alpha = math.acos((2*math.pow(self.R,2) - math.pow(self.C,2))/(2*math.pow(self.R,2)))
+        else:
+            self.alpha = 2*3.14*math.acos((2*math.pow(self.R,2) - math.pow(self.C,2))/(2*math.pow(self.R,2)))
+        
+        while self.alpha>0.005: 
             self.R = math.sqrt(math.pow(self.current_pose_x - self.goal_x , 2) + math.pow(self.current_pose_y - self.goal_y , 2))
 
             self.xr = self.R*math.cos(self.current_angle)
@@ -125,89 +142,72 @@ class TAMU_Controller(Node):
             self.yim = self.current_pose_y + self.yr
 
             self.C = math.sqrt(math.pow(self.xim - self.goal_x , 2) + math.pow(self.yim - self.goal_y , 2))
-
+            
             if self.xim > self.goal_x:
 
                 self.alpha = math.acos((2*math.pow(self.R,2) - math.pow(self.C,2))/(2*math.pow(self.R,2)))
-            else:
-                self.alpha = 2*3.14*math.acos((2*math.pow(self.R,2) - math.pow(self.C,2))/(2*math.pow(self.R,2)))
             
-            while self.alpha>0.005: 
-                self.R = math.sqrt(math.pow(self.current_pose_x - self.goal_x , 2) + math.pow(self.current_pose_y - self.goal_y , 2))
-
-                self.xr = self.R*math.cos(self.current_angle)
-                self.yr = self.R*math.sin(self.current_angle)
-
-                self.xim = self.current_pose_x + self.xr
-                self.yim = self.current_pose_y + self.yr
-
-                self.C = math.sqrt(math.pow(self.xim - self.goal_x , 2) + math.pow(self.yim - self.goal_y , 2))
-                
-                if self.xim > self.goal_x:
-
-                    self.alpha = math.acos((2*math.pow(self.R,2) - math.pow(self.C,2))/(2*math.pow(self.R,2)))
-                
-                else:
-                    
-                    self.alpha = 2*3.14*math.acos((2*math.pow(self.R,2) - math.pow(self.C,2))/(2*math.pow(self.R,2)))
-
-                self.alpha = math.acos((2*math.pow(self.R,2) - math.pow(self.C,2))/(2*math.pow(self.R,2)))
-
-                self.PID_angle = self.angle_PID.update(self.alpha)
-
-                self.msg.angular.z = self.PID_angle
-
-                self.pub.publish(self.msg)
-                
-        def distance_controller(self):
-            self.distance = math.sqrt(math.pow(self.goal_x - self.current_pose_x , 2) + math.pow(self.goal_y - self.current_pose_y, 2 ))
-            #self.R = math.sqrt(math.pow(self.current_pose_x - self.goal_x , 2) + math.pow(self.current_pose_y - self.goal_y , 2))
-            while self.distance > 0.15:
-
-                self.distance = math.sqrt(math.pow(self.goal_x - self.current_pose_x , 2) + math.pow(self.goal_y - self.current_pose_y, 2 ))
-
-                self.PID_distance = self.distance_PID.update(self.distance)
-
-                self.msg.linear.x = self.PID_distance
-
-                self.pub.publish(self.msg)
-
-        
-        # def move_contour(self, contour):
-        #     #Need to iterate through every set of points in this contour
-        #     #Its a bunch of line segments, so there might need to be some adjustment for the corners to avoid rounding them off. 
-        #     for point in contour:
-        #         self.goal_x = point[:, 0]
-        #         self.goal_y = point[:, 1]
-        #         #NOTE: Might need to make it so that the angle lines up before the distance controller does anything
-        #         #TODO: Make it so the angular controller lines up before movement
-        #         self.angular_controller()
-        #         self.distance_controller()
-
-        def move_point(self, point):
-            self.goal_x = point[0]
-            self.goal_y = point[1]
-            self.angular_controller()
-            self.distance_controller()
-
-        def pose_callback(self, data):
-
-            self.current_pose_x = data.x
-            self.current_pose_y = data.y
-            self.current_angle = data.theta
-
-        # Helper functions
-        def set_pen(self, value):
-            # Call the set_pen service to activate/deactivate pen
-            req = SetBool.Request()
-            req.data = value
-            future = self.set_pen_client.call_async(req)
-            rclpy.spin_until_future_complete(self, future)
-
-            if future.result() is not None:
-                self.get_logger().info('Pen set to: %r' % future.result().message)
             else:
-                self.get_logger().error('Failed to call set_pen service')
+                
+                self.alpha = 2*3.14*math.acos((2*math.pow(self.R,2) - math.pow(self.C,2))/(2*math.pow(self.R,2)))
+
+            self.alpha = math.acos((2*math.pow(self.R,2) - math.pow(self.C,2))/(2*math.pow(self.R,2)))
+
+            self.PID_angle = self.angle_PID.update(self.alpha)
+
+            self.msg.angular.z = self.PID_angle
+
+            self.pub.publish(self.msg)
+            
+    def distance_controller(self):
+        self.distance = math.sqrt(math.pow(self.goal_x - self.current_pose_x , 2) + math.pow(self.goal_y - self.current_pose_y, 2 ))
+        #self.R = math.sqrt(math.pow(self.current_pose_x - self.goal_x , 2) + math.pow(self.current_pose_y - self.goal_y , 2))
+        while self.distance > 0.15:
+
+            self.distance = math.sqrt(math.pow(self.goal_x - self.current_pose_x , 2) + math.pow(self.goal_y - self.current_pose_y, 2 ))
+
+            self.PID_distance = self.distance_PID.update(self.distance)
+
+            self.msg.linear.x = self.PID_distance
+
+            self.pub.publish(self.msg)
+
+    
+    # def move_contour(self, contour):
+    #     #Need to iterate through every set of points in this contour
+    #     #Its a bunch of line segments, so there might need to be some adjustment for the corners to avoid rounding them off. 
+    #     for point in contour:
+    #         self.goal_x = point[:, 0]
+    #         self.goal_y = point[:, 1]
+    #         #NOTE: Might need to make it so that the angle lines up before the distance controller does anything
+    #         #TODO: Make it so the angular controller lines up before movement
+    #         self.angular_controller()
+    #         self.distance_controller()
+
+    def move_point(self, point):
+        self.goal_x = point[0]
+        self.goal_y = point[1]
+        self.angular_controller()
+        self.distance_controller()
+
+    def pose_callback(self, data):
+
+        self.current_pose_x = data.x
+        self.current_pose_y = data.y
+        self.current_angle = data.theta
+
+    # Helper functions
+    def set_pen(self, value):
+        # Call the set_pen service to activate/deactivate pen
+        req = SetBool.Request()
+        req.data = value
+        future = self.set_pen_client.call_async(req)
+        rclpy.spin_until_future_complete(self, future)
+
+        if future.result() is not None:
+            self.get_logger().info('Pen set to: %r' % future.result().message)
+        else:
+            self.get_logger().error('Failed to call set_pen service')
         
 def get_contours(im_pth):
     #opening the image and grayscaling it
