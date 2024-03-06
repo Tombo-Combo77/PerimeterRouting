@@ -81,9 +81,9 @@ class TAMU_Controller(Node):
             self.get_logger().info('set_pen service not available, waiting again...')
 
     def stop(self):
-        self.msg.linear.x = 0
-        self.msg.linear.y = 0
-        self.msg.angular.z = 0
+        self.msg.linear.x = 0.0
+        self.msg.linear.y = 0.0
+        self.msg.angular.z = 0.0
         self.pub.publish(self.msg)
 
     def _angle(self, point):
