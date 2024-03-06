@@ -91,7 +91,7 @@ class TAMU_Controller(Node):
 
     def _angle(self, point):
         self.stop()
-        self.angle_PID.set_point = point
+        self.angle_PID.set_point(point)
         control = np.inf
         while control>.1:
             control = self.angle_PID.calculate_control(self.current_pose.theta)
@@ -101,7 +101,7 @@ class TAMU_Controller(Node):
     def _linear(self, point):
         self.stop()
         print("Linear Point: ",point)
-        self.linear_PID.set_point = point
+        self.linear_PID.set_point(point)
         control = np.inf
         while control > .1:
             control = self.linear_PID.calculate_control2D([self.current_pose.x, self.current_pose.y])
