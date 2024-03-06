@@ -106,11 +106,12 @@ class TAMU_Controller(Node):
     def _linear(self, point):
         self.stop()
         print("Linear Point: ",point)
-        self.linear_PID.set_point(point)
+        self.linear_PID.set_point(point[0])
         control = np.inf
         while np.abs(control) > .01:
             rclpy.spin_once(self)
-            control = self.linear_PID.calculate_control2D([self.current_pose.x, self.current_pose.y])
+            #control = self.linear_PID.calculate_control2D([self.current_pose.x, self.current_pose.y])
+            control = self.linear_PID.calculate_control(self.current_pose.x)
             control = float(max(-self.max_vel, min(control, self.max_vel)))
             self.msg.linear.x = control
             # self.msg.linear.y = control #This only uses
