@@ -241,7 +241,7 @@ def adjustContours(perimeter, bounds=[-5, 5, -5, 2.87]):
 
 def approximatePoly(contours):
     global image
-    epsilon = 2
+    epsilon = .01
     perimeter = []
     for contour in contours:
         perimeter.append(cv.approxPolyDP(contour, epsilon, True))
@@ -290,8 +290,8 @@ def main():
     perimeter = approximatePoly(contours)
 
     # Step Three: Map these contours to real-values (bounding box method)
-    adjusted = adjustContours(perimeter, bounds=[-5, 5, -5, 2.87])
-
+    #adjusted = adjustContours(perimeter, bounds=[-5, 5, -5, 2.87])
+    adjusted = perimeter
     # Step Four: Iterate through each of these contours and trace them using a PID controller.
     PIDController(adjusted, origin=0)
 
