@@ -73,7 +73,10 @@ class TAMU_Controller(Node):
         self.msg = Twist()
 
         #Default Parameters
-        self.current_pose = None
+        self.current_pose = Pose2D()
+        self.current_pose.x = 0
+        self.current_pose.y = 0
+        self.current_pose.theta = 0
 
         # Initialize the service client to set pen
         self.set_pen_client = self.create_client(SetBool, 'set_pen')
