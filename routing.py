@@ -95,7 +95,7 @@ class TAMU_Controller(Node):
         control = np.inf
         while control>.1:
             control = self.angle_PID.calculate_control(self.current_pose.theta)
-            self.msg.angular.z = max(-self.max_rad, min(control, self.max_rad)) 
+            self.msg.angular.z = float(max(-self.max_rad, min(control, self.max_rad)))
         self.stop()
 
     def _linear(self, point):
@@ -105,7 +105,7 @@ class TAMU_Controller(Node):
         control = np.inf
         while control > .1:
             control = self.linear_PID.calculate_control2D([self.current_pose.x, self.current_pose.y])
-            control = max(-self.max_vel, min(control, self.max_vel)) 
+            control = float(max(-self.max_vel, min(control, self.max_vel)))
             self.msg.linear.x = control
             self.msg.linear.y = control
         self.stop()
