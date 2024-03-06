@@ -269,11 +269,12 @@ def PIDController(perimeter, origin=0.0):
         initial = True
         controller.set_pen(False)
         for point in contour:
-            print("Point: ", point)
+            # print("Point: ", point)
             controller.move_point(point[0])
             if initial:
                 initial = False
                 controller.set_pen(True)
+        controller.move_point(contour[0][0])
 
     # TODO: Go through each contour, patching the edges together after turning the pen off.
     rclpy.shutdown()
