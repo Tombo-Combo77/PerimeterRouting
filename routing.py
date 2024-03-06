@@ -6,6 +6,7 @@ from rclpy.node import Node
 from geometry_msgs.msg import Twist, Pose2D
 from std_srvs.srv import SetBool
 import math
+import time
 #from PID import TAMU_Controller #Class used for PID controller, going to pass it the lines in the contours
 
 global image
@@ -98,7 +99,8 @@ class TAMU_Controller(Node):
             control = self.angle_PID.calculate_control(self.current_pose.theta)
             self.msg.angular.z = float(max(-self.max_rad, min(control, self.max_rad)))
             self.pub.publish(self.msg)
-            print("Angular CONTROL: ", control, " Set Piont: ", self.angle_PID.setpoint)
+            print("Angular CONTROL: ", control, " Set Piont: ", self.angle_PID.setpoint, " Pose: ", self.current_pose)
+            time.sleep(.1) #Pose updates at 10 Hz
         self.stop()
 
     def _linear(self, point):
@@ -112,7 +114,8 @@ class TAMU_Controller(Node):
             self.msg.linear.x = control
             # self.msg.linear.y = control #This only uses
             self.pub.publish(self.msg)
-            print("Linear CONTROL: ", control, " Set Point: ", self.linear_PID.setpoint)
+            print("Linear CONTROL: ", control, " Set Point: ", self.linear_PID.setpoint, " Pose: ", self.current_pose)
+            time.sleep(.1) #Pose updates at 10 Hz
         self.stop()
 
     def move_point(self, point):
