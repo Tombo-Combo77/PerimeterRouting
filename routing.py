@@ -222,7 +222,7 @@ def PIDController(perimeter, origin = 0.0):
     """
     rclpy.init()
     controller = TAMU_Controller()
-
+    rclpy.spin(controller)
     for contour in perimeter:
         initial = True
         controller.set_pen(False)
@@ -234,7 +234,7 @@ def PIDController(perimeter, origin = 0.0):
                 controller.set_pen(True)
 
     #TODO: Go through each contour, patching the edges together after turning the pen off. 
-    rclpu.shutdown()
+    rclpy.shutdown()
     pass
 
 def main():
