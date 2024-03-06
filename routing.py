@@ -102,6 +102,7 @@ class TAMU_Controller(Node):
         angle = (math.atan2(
             (point[1]-self.current_pose.y), (point[0]-self.current_pose.x)))
         if np.abs(angle-self.current_pose.theta) > math.pi:
+            print("GO Round")
             angle -= 2*math.pi
 
         self.angle_PID.set_point(angle)
@@ -173,7 +174,6 @@ class TAMU_Controller(Node):
         else:
             self.get_logger().error('Failed to call set_pen service')
 
-def get_contours(im_pth):
     # opening the image and grayscaling it
     global image
     image = cv.imread(im_pth)
