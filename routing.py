@@ -309,7 +309,8 @@ def PIDController(perimeter, origin = 0.0):
 
 def main():
     #Step One: Get the contours
-    contours = get_contours('./img.jpg')
+    contours = get_contours('/home/tcous/ros2_humble/src/TAMU_ctrl/TAMU_ctrl/img.jpg')
+    #contours = get_contours('./img.jpg')
 
     #Step Two: Break the contours into lines (approxPolyDP)
     perimeter = approximatePoly(contours)
@@ -319,6 +320,6 @@ def main():
 
     #Step Four: Iterate through each of these contours and trace them using a PID controller. 
     PIDController(adjusted, origin = 0)
-    
+
 if __name__ == "__main__":
     main()
