@@ -130,7 +130,7 @@ class TAMU_Controller(Node):
             
             while self.alpha>0.005: 
                 self.R = math.sqrt(math.pow(self.current_pose_x - self.goal_x , 2) + math.pow(self.current_pose_y - self.goal_y , 2))
-                #print "dentro do while"
+
                 self.xr = self.R*math.cos(self.current_angle)
                 self.yr = self.R*math.sin(self.current_angle)
 
@@ -158,7 +158,6 @@ class TAMU_Controller(Node):
         def distance_controller(self):
             self.distance = math.sqrt(math.pow(self.goal_x - self.current_pose_x , 2) + math.pow(self.goal_y - self.current_pose_y, 2 ))
             #self.R = math.sqrt(math.pow(self.current_pose_x - self.goal_x , 2) + math.pow(self.current_pose_y - self.goal_y , 2))
-            print "distance: " + str(self.distance)
             while self.distance > 0.15:
 
                 self.distance = math.sqrt(math.pow(self.goal_x - self.current_pose_x , 2) + math.pow(self.goal_y - self.current_pose_y, 2 ))
