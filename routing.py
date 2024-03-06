@@ -93,22 +93,28 @@ class TAMU_Controller(Node):
     def _angle(self, point):
         self.stop()
         self.angle_PID.set_point((math.atan2((point[1]-self.current_pose.y),(point[0]-self.current_pose.x))))
-        control = np.inf
-        while np.abs(control)>.01:
+        controlArr = np.full([10], np.inf) #Moving average filter
+        idx = 0
+        while np.abs(np.mean(controlArr))>.01:
             rclpy.spin_once(self)
             control = self.angle_PID.calculate_control(self.current_pose.theta)
             self.msg.angular.z = float(max(-self.max_rad, min(control, self.max_rad)))
             self.pub.publish(self.msg)
             print("Angular CONTROL: ", control, " Set Piont: ", self.angle_PID.setpoint, " Pose: ", self.current_pose, " Message: ", self.msg)
             time.sleep(.1) #Pose updates at 10 Hz
+            controlArr[idx] = control
+            idx+=1
+            if idx>=10:
+                idx = 0
         self.stop()
 
     def _linear(self, point):
         self.stop()
         print("Linear Point: ",point)
         self.linear_PID.set_point(point[0])
-        control = np.inf
-        while np.abs(control) > .01:
+        controlArr = np.full([10], np.inf)
+        idx = 0
+        while np.abs(np.mean(controlArr)) > .01:
             rclpy.spin_once(self)
             #control = self.linear_PID.calculate_control2D([self.current_pose.x, self.current_pose.y])
             control = self.linear_PID.calculate_control(self.current_pose.x)
@@ -118,6 +124,10 @@ class TAMU_Controller(Node):
             self.pub.publish(self.msg)
             print("Linear CONTROL: ", control, " Set Point: ", self.linear_PID.setpoint, " Pose: ", self.current_pose)
             time.sleep(.1) #Pose updates at 10 Hz
+            controlArr[idx] = control
+            idx+=1
+            if idx>=10:
+                idx = 0
         self.stop()
 
     def move_point(self, point):
