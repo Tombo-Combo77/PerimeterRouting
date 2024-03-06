@@ -63,7 +63,7 @@ class TAMU_Controller(Node):
         self.sub = self.create_subscription(Pose2D, "/pose", self.pose_callback, 10) #What is the topic for returning the information? #What is the  datatype for Pose's location?
 
         # Setting PID controller parameters
-        self.angle_PID = PID(kp = .5, ki = .01, kd = .01, setpoint = 0)
+        self.angle_PID = PID(kp = .5, ki = .00, kd = .00, setpoint = 0)
         self.linear_PID = PID(kp = .5, ki = .01, kd = .01, setpoint = 0)
 
         #Setting bounds on the upper limits of the controller outputs
@@ -91,7 +91,7 @@ class TAMU_Controller(Node):
 
     def _angle(self, point):
         self.stop()
-        self.angle_PID.set_point(point)
+        self.angle_PID.set_point(np.arctan((point[1]-self.current_pose.y)/(point[0]-self.current_pose.x)))
         control = np.inf
         while control>.1:
             control = self.angle_PID.calculate_control(self.current_pose.theta)
