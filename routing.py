@@ -156,7 +156,7 @@ class TAMU_Controller(Node):
         self._linear(point)
 
     def pose_callback(self, data):
-        print("Pose Updated: ", data)
+        # print("Pose Updated: ", data)
         self.current_pose = data
 
     # Helper functions
