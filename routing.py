@@ -64,12 +64,12 @@ class TAMU_Controller(Node):
         self.sub = self.create_subscription(Pose2D, "/pose", self.pose_callback, 10) #What is the topic for returning the information? #What is the  datatype for Pose's location?
 
         # Setting PID controller parameters
-        self.angle_PID = PID(kp = .5, ki = .01, kd = .01, setpoint = 0)
-        self.linear_PID = PID(kp = .5, ki = .1, kd = .1, setpoint = 0)
+        self.angle_PID = PID(kp = .5, ki = .00, kd = .00, setpoint = 0)
+        self.linear_PID = PID(kp = .5, ki = .00, kd = .01, setpoint = 0)
 
         #Setting bounds on the upper limits of the controller outputs
         self.max_rad = 17
-        self.max_vel = 5
+        self.max_vel = 10
 
         self.msg = Twist()
 
@@ -100,7 +100,7 @@ class TAMU_Controller(Node):
             self.msg.angular.z = float(max(-self.max_rad, min(control, self.max_rad)))
             self.pub.publish(self.msg)
             print("Angular CONTROL: ", control, " Set Piont: ", self.angle_PID.setpoint, " Pose: ", self.current_pose, " Message: ", self.msg)
-            time.sleep(.01) #Pose updates at 10 Hz
+            time.sleep(.1) #Pose updates at 10 Hz
         self.stop()
 
     def _linear(self, point):
@@ -117,7 +117,7 @@ class TAMU_Controller(Node):
             # self.msg.linear.y = control #This only uses
             self.pub.publish(self.msg)
             print("Linear CONTROL: ", control, " Set Point: ", self.linear_PID.setpoint, " Pose: ", self.current_pose)
-            time.sleep(.01) #Pose updates at 10 Hz
+            time.sleep(.1) #Pose updates at 10 Hz
         self.stop()
 
     def move_point(self, point):
