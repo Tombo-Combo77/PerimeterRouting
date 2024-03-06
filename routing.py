@@ -113,9 +113,10 @@ class TAMU_Controller(Node):
         print("ANGLE SET POINT: ", angle)
         controlArr = np.full([10], np.inf)  # Moving average filter
         idx = 0
-        while np.abs(np.mean(controlArr)) > .01:
+        while np.abs(np.mean(controlArr)) > .001:
             rclpy.spin_once(self)
             control = self.angle_PID.calculate_control(self.current_pose.theta)
+
             self.msg.angular.z = float(
                 max(-self.max_rad, min(control, self.max_rad)))
             self.pub.publish(self.msg)
@@ -135,13 +136,12 @@ class TAMU_Controller(Node):
         controlArr = np.full([10], np.inf)
         idx = 0
         timeout = 50  # iterations before angle gets readjusted. To compensate for drift
-        # while np.abs(np.mean(controlArr)) > .01:
         while np.abs(np.mean(controlArr)) > .01:
             rclpy.spin_once(self)
             # control = self.linear_PID.calculate_control2D([self.current_pose.x, self.current_pose.y])
             control = self.linear_PID.calculate_control(self.current_pose.x)
             control = float(max(-self.max_vel, min(control, self.max_vel)))
-            self.msg.linear.x = control
+            self.msg.linear.x = np.cos(self.current_pose.theta)*control #accounting for facing the opposite direction
             # self.msg.linear.y = control #This only uses
             self.pub.publish(self.msg)
             print("Linear CONTROL: ", control, " Set Point: ",
