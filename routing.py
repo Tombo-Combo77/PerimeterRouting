@@ -111,8 +111,8 @@ class TAMU_Controller(Node):
         self.stop()
 
     def move_point(self, point):
-        self._angle(point)
-        self._linear(point)
+        self._angle(point[0])
+        self._linear(point[0])
 
     def pose_callback(self, data):
         self.current_pose = data
