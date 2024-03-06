@@ -95,7 +95,8 @@ class TAMU_Controller(Node):
         self.angle_PID.set_point((math.atan2((point[1]-self.current_pose.y),(point[0]-self.current_pose.x))))
         controlArr = np.full([10], np.inf) #Moving average filter
         idx = 0
-        while np.abs(np.mean(controlArr))>.01:
+        #while np.abs(np.mean(controlArr))>.01:
+        while np.abs(np.mean(controlArr))>.2:
             rclpy.spin_once(self)
             control = self.angle_PID.calculate_control(self.current_pose.theta)
             self.msg.angular.z = float(max(-self.max_rad, min(control, self.max_rad)))
@@ -115,7 +116,8 @@ class TAMU_Controller(Node):
         controlArr = np.full([10], np.inf)
         idx = 0
         timeout = 1000 #iterations before angle gets readjusted. To compensate for drift
-        while np.abs(np.mean(controlArr)) > .01:
+        #while np.abs(np.mean(controlArr)) > .01:
+        while np.abs(np.mean(controlArr)) > .2:
             rclpy.spin_once(self)
             #control = self.linear_PID.calculate_control2D([self.current_pose.x, self.current_pose.y])
             control = self.linear_PID.calculate_control(self.current_pose.x)
