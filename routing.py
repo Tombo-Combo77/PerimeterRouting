@@ -90,7 +90,7 @@ class TAMU_Controller(Node):
 
     def _angle(self, point):
         self.stop()
-        self.angle_PID.set_point((math.atan2((point[1]-self.current_pose.y),(point[0]-self.current_pose.x))))
+        self.angle_PID.set_point((2*math.pi+(math.atan2((point[1]-self.current_pose.y),(point[0]-self.current_pose.x))))%(2*math.pi))
         controlArr = np.full([10], np.inf) #Moving average filter
         idx = 0
         while np.abs(np.mean(controlArr))>.01:
