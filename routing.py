@@ -35,7 +35,7 @@ class PID():
 
         self.prev_error = error
 
-        integral = max(-1000, min(integral, 1000)) #bounds on the integral
+        self.integral = max(-1000, min(self.integral, 1000)) #bounds on the integral
         return control_effort
     
     #For linear movement, we take into account both X and Y
@@ -50,7 +50,7 @@ class PID():
 
         self.prev_error = error
 
-        integral = max(-1000, min(integral, 1000)) #bounds on the integral
+        self.integral = max(-1000, min(self.integral, 1000)) #bounds on the integral
         return control_effort
     
 
