@@ -71,7 +71,7 @@ class TAMU_Controller(Node):
 
         # Setting PID controller parameters
         self.angle_PID = PID(kp=.5, ki=.00, kd=.00, setpoint=0)
-        self.linear_PID = PID(kp=.1, ki=.1, kd=.5, setpoint=0)
+        self.linear_PID = PID(kp=.5, ki=.00, kd=.01, setpoint=0)
 
         # Setting bounds on the upper limits of the controller outputs
         self.max_rad = 17
@@ -141,7 +141,7 @@ class TAMU_Controller(Node):
             # control = self.linear_PID.calculate_control2D([self.current_pose.x, self.current_pose.y])
             control = self.linear_PID.calculate_control(self.current_pose.x)
             control = float(max(-self.max_vel, min(control, self.max_vel)))
-            self.msg.linear.x = np.cos(self.current_pose.theta)*control #accounting for facing the opposite direction
+            self.msg.linear.x = np.sign(np.cos(self.current_pose.theta))*control #accounting for facing the opposite direction
             # self.msg.linear.y = control #This only uses
             self.pub.publish(self.msg)
             print("Linear CONTROL: ", control, " Set Point: ",
