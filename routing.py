@@ -103,12 +103,10 @@ class TAMU_Controller(Node):
             (point[1]-self.current_pose.y), (point[0]-self.current_pose.x)))
         
         #Testing that the angle is in the proper direction
-        l2Ang = np.sqrt((np.cos(angle)+self.current_pose.x-point[0])**2 + (np.sin(angle)+self.current_pose.y-point[1])**2)
-        l2Base = np.sqrt((np.cos(self.current_pose.theta)+self.current_pose.x-point[0])**2 + (np.sin(self.current_pose.theta)+self.current_pose.y-point[1])**2)
-        print("L2 Ang: ", l2Ang, "L2 Base: ", l2Base)
-        if l2Ang>l2Base:
-            print("TEST FAILED********************************")
-            angle-=math.pi
+        # l2Ang = np.sqrt((np.cos(angle)+self.current_pose.x-point[0])**2 + (np.sin(angle)+self.current_pose.y-point[1])**2)
+        # l2Base = np.sqrt((np.cos(self.current_pose.theta)+self.current_pose.x-point[0])**2 + (np.sin(self.current_pose.theta)+self.current_pose.y-point[1])**2)
+        # if l2Ang>l2Base:
+        #     angle-=math.pi
         self.angle_PID.set_point(angle)
         print("ANGLE SET POINT: ", angle)
         controlArr = np.full([10], np.inf)  # Moving average filter
@@ -135,7 +133,7 @@ class TAMU_Controller(Node):
         self.linear_PID.set_point(point[0])
         controlArr = np.full([10], np.inf)
         idx = 0
-        timeout = 50  # iterations before angle gets readjusted. To compensate for drift
+        timeout = 100  # iterations before angle gets readjusted. To compensate for drift
         while np.abs(np.mean(controlArr)) > .01:
             rclpy.spin_once(self)
             # control = self.linear_PID.calculate_control2D([self.current_pose.x, self.current_pose.y])
@@ -154,7 +152,7 @@ class TAMU_Controller(Node):
             timeout -= 1
             if timeout == 0:
                 self._angle(point)
-                timeout = 50
+                timeout = 100
         self.stop()
 
     def move_point(self, point):
