@@ -161,8 +161,8 @@ class TAMU_Controller(Node):
             self.PID_angle = self.angle_PID.update(self.alpha)
 
             #Testing
-            self.msg.linear.x = 1.0
-            self.msg.linear.y = 1.0
+            # self.msg.linear.x = 1.0
+            # self.msg.linear.y = 1.0
             self.msg.angular.z = self.PID_angle
 
             self.pub.publish(self.msg)
