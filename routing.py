@@ -101,7 +101,7 @@ class TAMU_Controller(Node):
             self.msg.angular.z = float(max(-self.max_rad, min(control, self.max_rad)))
             self.pub.publish(self.msg)
             print("Angular CONTROL: ", control, " Set Piont: ", self.angle_PID.setpoint, " Pose: ", self.current_pose, " Message: ", self.msg)
-            time.sleep(.1) #Pose updates at 10 Hz
+            time.sleep(.2) #Pose updates at 10 Hz
             controlArr[idx] = control
             idx+=1
             if idx>=10:
@@ -114,6 +114,7 @@ class TAMU_Controller(Node):
         self.linear_PID.set_point(point[0])
         controlArr = np.full([10], np.inf)
         idx = 0
+        timeout = 100 #iterations before angle gets readjusted. To compensate for drift
         while np.abs(np.mean(controlArr)) > .01:
             rclpy.spin_once(self)
             #control = self.linear_PID.calculate_control2D([self.current_pose.x, self.current_pose.y])
@@ -123,11 +124,15 @@ class TAMU_Controller(Node):
             # self.msg.linear.y = control #This only uses
             self.pub.publish(self.msg)
             print("Linear CONTROL: ", control, " Set Point: ", self.linear_PID.setpoint, " Pose: ", self.current_pose)
-            time.sleep(.1) #Pose updates at 10 Hz
+            time.sleep(.2) #Pose updates at 10 Hz
             controlArr[idx] = control
             idx+=1
             if idx>=10:
                 idx = 0
+            timeout-=1
+            if timeout == 0:
+                self._angle(point)
+                timeout = 100
         self.stop()
 
     def move_point(self, point):
