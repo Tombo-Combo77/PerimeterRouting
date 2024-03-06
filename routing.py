@@ -239,7 +239,6 @@ def approximatePoly(contours):
     perimeter = []
     for contour in contours:
         perimeter.append(cv.approxPolyDP(contour, epsilon, True))
-        print(perimeter[-1].shape)
     # print("Initial", perimeter[-1].shape, perimeter[-1].dtype, perimeter[-2].shape)
     # Displaying
     # for contour in perimeter:
@@ -260,7 +259,7 @@ def PIDController(perimeter, origin=0.0):
     rclpy.init()
     controller = TAMU_Controller()
     # rclpy.spin(controller)
-    for contour in perimeter[::-1]:
+    for contour in perimeter:
         initial = True
         controller.set_pen(False)
         for point in contour:
