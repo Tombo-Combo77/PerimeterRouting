@@ -3,7 +3,7 @@ import cv2 as cv
 import random
 import rclpy
 from rclpy.node import Node
-from geometry_msgs.msg import Twist, Pose
+from geometry_msgs.msg import Twist, Pose2D
 from std_srvs.srv import SetBool
 import math
 #from PID import TAMU_Controller #Class used for PID controller, going to pass it the lines in the contours
@@ -92,8 +92,8 @@ class TAMU_Controller(Node):
         super().__init__('shape_drawer')
         # Movement and feedback
         #TODO: Setup the subscriber properly.
-        self.pub = self.create_publisher(Twist, '/cmd_vel', 10)
-        self.sub = self.create_subscription(Pose, "/pose", self.pose_callback, 10) #What is the topic for returning the information? #What is the  datatype for Pose's location?
+        self.pub = self.create_publisher(Twist, 'cmd_vel', 10)
+        self.sub = self.create_subscription(Pose2D, "/pose", self.pose_callback, 10) #What is the topic for returning the information? #What is the  datatype for Pose's location?
 
         # Setting PID controller parameters
         self.angle_PID = PID()
