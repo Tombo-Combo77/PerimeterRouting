@@ -104,7 +104,7 @@ class TAMU_Controller(Node):
         if np.abs(angle-self.current_pose.theta) > math.pi:
             angle = (angle+math.pi) % 2*math.pi
 
-        self.angle_PID.set_point()
+        self.angle_PID.set_point(angle)
         controlArr = np.full([10], np.inf)  # Moving average filter
         idx = 0
         while np.abs(np.mean(controlArr)) > .01:
