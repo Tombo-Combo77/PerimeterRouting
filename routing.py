@@ -177,6 +177,7 @@ class TAMU_Controller(Node):
         else:
             self.get_logger().error('Failed to call set_pen service')
 
+def get_contours(im_pth):
     # opening the image and grayscaling it
     global image
     image = cv.imread(im_pth)
