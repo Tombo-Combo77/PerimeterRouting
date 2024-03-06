@@ -160,7 +160,7 @@ class TAMU_Controller(Node):
 
             self.PID_angle = self.angle_PID.update(self.alpha)
 
-            self.msg.angular.z = self.PID_angle
+            self.msg.angular.x = self.PID_angle
 
             self.pub.publish(self.msg)
             
