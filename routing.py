@@ -113,7 +113,7 @@ class TAMU_Controller(Node):
         print("ANGLE SET POINT: ", angle)
         controlArr = np.full([10], np.inf)  # Moving average filter
         idx = 0
-        while np.abs(np.mean(controlArr)) > .001:
+        while np.abs(np.mean(controlArr)) > .01:
             rclpy.spin_once(self)
             control = self.angle_PID.calculate_control(self.current_pose.theta)
 
