@@ -71,7 +71,7 @@ class TAMU_Controller(Node):
 
         # Setting PID controller parameters
         self.angle_PID = PID(kp=.5, ki=.00, kd=.00, setpoint=0)
-        self.linear_PID = PID(kp=.5, ki=.00, kd=.1, setpoint=0)
+        self.linear_PID = PID(kp=.4, ki=.00, kd=.5, setpoint=0)
 
         # Setting bounds on the upper limits of the controller outputs
         self.max_rad = 17
