@@ -160,7 +160,7 @@ class TAMU_Controller(Node):
 
             self.PID_angle = self.angle_PID.update(self.alpha)
 
-            self.msg.angular.x = self.PID_angle
+            self.msg.angular.z = self.PID_angle
 
             self.pub.publish(self.msg)
             
@@ -303,7 +303,7 @@ def PIDController(perimeter, origin = 0.0):
         initial = True
         controller.set_pen(False)
         for point in contour:
-            # print("Point: ", point)
+            print("Point: ", point)
             controller.move_point(point[0])
             if initial:
                 initial = False
