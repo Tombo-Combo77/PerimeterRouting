@@ -112,7 +112,7 @@ class TAMU_Controller(Node):
         self.linear_PID.set_point(point[0])
         controlArr = np.full([10], np.inf)
         idx = 0
-        timeout = 1000 #iterations before angle gets readjusted. To compensate for drift
+        timeout = 50 #iterations before angle gets readjusted. To compensate for drift
         #while np.abs(np.mean(controlArr)) > .01:
         while np.abs(np.mean(controlArr)) > .01:
             rclpy.spin_once(self)
@@ -131,7 +131,7 @@ class TAMU_Controller(Node):
             timeout-=1
             if timeout == 0:
                 self._angle(point)
-                timeout = 1000
+                timeout = 50
         self.stop()
 
     def move_point(self, point):
