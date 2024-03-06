@@ -104,7 +104,7 @@ class TAMU_Controller(Node):
         
         #Testing that the angle is in the proper direction
         l2Ang = np.sqrt((np.cos(angle)+self.current_pose.x-point[0])**2 + (np.sin(angle)+self.current_pose.y-point[1])**2)
-        l2Base = np.sqrt((self.current_pose.x-point[0])**2 + (self.current_pose.y-point[1])**2)
+        l2Base = np.sqrt((np.cos(self.current_pose.theta)+self.current_pose.x-point[0])**2 + (np.sin(self.current_pose.theta)+self.current_pose.y-point[1])**2)
         print("L2 Ang: ", l2Ang, "L2 Base: ", l2Base)
         if l2Ang>l2Base:
             print("TEST FAILED********************************")
