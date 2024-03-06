@@ -239,10 +239,11 @@ def adjustContours(perimeter, bounds=[-5, 5, -5, 2.87]):
 
 def approximatePoly(contours):
     global image
-    epsilon = .01
+    epsilon = 1
     perimeter = []
     for contour in contours:
         perimeter.append(cv.approxPolyDP(contour, epsilon, True))
+        print("Contour Shape: ", perimeter[-1].shape)
     # print("Initial", perimeter[-1].shape, perimeter[-1].dtype, perimeter[-2].shape)
     # Displaying
     # for contour in perimeter:
@@ -281,9 +282,9 @@ def PIDController(perimeter, origin=0.0):
 
 def main():
     # Step One: Get the contours
-    contours = get_contours(
-        '/home/tcous/ros2_humble/src/TAMU_ctrl/TAMU_ctrl/img.jpg')
-    # contours = get_contours('./img.jpg')
+    # contours = get_contours(
+    #     '/home/tcous/ros2_humble/src/TAMU_ctrl/TAMU_ctrl/img.jpg')
+    contours = get_contours('./img.jpg')
 
     # Step Two: Break the contours into lines (approxPolyDP)
     perimeter = approximatePoly(contours)
@@ -291,7 +292,7 @@ def main():
     # Step Three: Map these contours to real-values (bounding box method)
     #adjusted = adjustContours(perimeter, bounds=[-5, 5, -5, 2.87])
     adjusted = perimeter
-    # Step Four: Iterate through each of these contours and trace them using a PID controller.
+    # # Step Four: Iterate through each of these contours and trace them using a PID controller.
     PIDController(adjusted, origin=0)
 
 
