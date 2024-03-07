@@ -52,12 +52,12 @@ class TAMU_Controller(Node):
             Pose2D, "/pose", self.pose_callback, 10)
 
         # Setting PID controller parameters
-        self.angle_PID = PID(kp=1.5, ki=.00, kd=0.0, setpoint=0)
-        self.linear_PID = PID(kp=1, ki=.00, kd=0.0, setpoint=0)
+        self.angle_PID = PID(kp=1, ki=.00, kd=0.0, setpoint=0)
+        self.linear_PID = PID(kp=1.5, ki=.00, kd=0.0, setpoint=0)
 
         # Setting bounds on the upper limits of the controller outputs
-        self.max_rad = 3
-        self.max_vel = 3
+        self.max_rad = 10
+        self.max_vel = 7
 
         self.msg = Twist()
 
@@ -85,17 +85,26 @@ class TAMU_Controller(Node):
             (point[1]-self.current_pose.y), (point[0]-self.current_pose.x)))
         
         #Testing that the angle is in the proper direction
+        start_pose = self.current_pose
         self.angle_PID.set_point(angle)
-        print("ANGLE SET POINT: ", angle)
         control = np.inf
+        err_arr = np.full(10, np.inf)
         error = np.inf
-        while np.abs(error) > .001:
+        idx = 0
+        while np.mean(np.abs(err_arr)) > .05:
+        #while np.abs(error) > .001:
             rclpy.spin_once(self)
             control = self.angle_PID.calculate_control(self.current_pose.theta)
+
             error = self.angle_PID.prev_error
             self.msg.angular.z = float(
                 max(-self.max_rad, min(control, self.max_rad)))
             self.pub.publish(self.msg)
+
+            err_arr[idx] = error
+            idx+=1
+            if idx == 10:
+                idx = 0
             #time.sleep(.01)  # Pose updates at 10 Hz
         self.stop()
 
@@ -104,19 +113,28 @@ class TAMU_Controller(Node):
         print("Linear Point: ", point)
         self.linear_PID.set_point(point[0])
         control = np.inf
+        err_arr = np.full(10, np.inf)
+        idx = 0
         error = np.inf
         timeout = 100  # iterations before angle gets readjusted. To compensate for drift
-        while np.abs(error) > .001:
+        while np.mean(np.abs(err_arr)) > .05:
+        #while(np.abs(error)) > .001:
             rclpy.spin_once(self)
             control = self.linear_PID.calculate_control(self.current_pose.x)
             error = self.linear_PID.prev_error
             control = float(max(-self.max_vel, min(control, self.max_vel)))
             self.msg.linear.x = np.sign(np.cos(self.current_pose.theta))*control #accounting for facing the opposite direction
             self.pub.publish(self.msg)
+
             timeout -= 1
             if timeout == 0:
                 self._angle(point)
                 timeout = 100
+
+            err_arr[idx] = error
+            idx+=1
+            if idx == 10:
+                idx = 0
         self.stop()
 
     def move_point(self, point):
@@ -152,6 +170,8 @@ def get_contours(im_pth):
         thresh,  cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
     # Typically, the only indice we'd care about is 0 or -1, but due to the hole in A, we have to finagle a bit
     indices = [0, 4]
+    print(heirarchy)
+    # indices = [1, 3, 5, 7]
     contours = np.asarray(contours)[np.isin(heirarchy, indices)[:, :, -1][0]]
 
     # Displaying the contours
@@ -160,7 +180,7 @@ def get_contours(im_pth):
     # cv.waitKey()
     return contours
 
-def adjustContours(perimeter, bounds=[-5, 5, -5, 2.87]):
+def adjustContours(perimeter, bounds=[5, -5, -5, 2.87]):
     # perimeter = np.asarray(perimeter, dtype = object)
     # print(np.min(perimeter[:, 0, 0]))
     # Finding current bounds, have to do it in this method because it is a ragged array.
@@ -169,10 +189,10 @@ def adjustContours(perimeter, bounds=[-5, 5, -5, 2.87]):
     maxX = 0
     maxY = 0
     for contour in perimeter:
-        xMin = np.min(contour[:, 0, 0])
-        yMin = np.min(contour[:, 0, 1])
-        xMax = np.max(contour[:, 0, 0])
-        yMax = np.max(contour[:, 0, 1])
+        xMin = np.min(contour[:, 0])
+        yMin = np.min(contour[:, 1])
+        xMax = np.max(contour[:, 0])
+        yMax = np.max(contour[:, 1])
         if xMin < minX:
             minX = xMin
         if yMin < minY:
@@ -188,30 +208,32 @@ def adjustContours(perimeter, bounds=[-5, 5, -5, 2.87]):
     out = []
     for contour in perimeter:
         contour = np.asarray(contour, dtype=float)
-        contour[:, 0, 0] -= minX
-        contour[:, 0, 1] -= minY
+        contour[:, 0] -= minX
+        contour[:, 1] -= minY
 
-        contour[:, 0, 0] *= ((bounds[1]-bounds[0])/adjX)
-        contour[:, 0, 1] *= ((bounds[3]-bounds[2])/adjY)
+        contour[:, 0] *= ((bounds[1]-bounds[0])/adjX)
+        contour[:, 1] *= ((bounds[3]-bounds[2])/adjY)
 
-        contour[:, 0, 0] += bounds[0]
-        contour[:, 0, 1] += bounds[2]
+        contour[:, 0] += bounds[0]
+        contour[:, 1] += bounds[2]
         out.append(contour)
 
     return out
 
 def approximatePoly(contours):
     global image
-    epsilon = .75
     perimeter = []
     for contour in contours:
-        perimeter.append(cv.approxPolyDP(contour, epsilon, True))
-        print("Contour Shape: ", perimeter[-1].shape)
-    # print("Initial", perimeter[-1].shape, perimeter[-1].dtype, perimeter[-2].shape)
+        epsilon = .005*cv.arcLength(contour, True)
+        perimeter.append(np.asarray([point[0] for point in cv.approxPolyDP(contour, epsilon, True)]))
+        print("SHape: ", perimeter[-1].shape)
+    #print("Initial", perimeter[-1].shape, perimeter[-1].dtype, perimeter[-2].shape)
     # Displaying
     for contour in perimeter:
         color = [random.randint(0,255) for col in range(3)]
         cv.polylines(image, [contour], True, color, 2)
+        for point in contour:
+            cv.circle(image, point, 5, (0, 0, 255), -1)
     cv.imshow("Contour with straight lines", image)
     cv.waitKey(0)
     return perimeter
@@ -232,12 +254,12 @@ def PIDController(perimeter, origin=0.0):
         controller.set_pen(False)
         for point in contour:
             # print("Point: ", point)
-            controller.move_point(point[0])
+            controller.move_point(point)
             if initial:
                 initial = False
                 controller.set_pen(True)
-        controller.move_point(contour[0][0])
-        controller.move_point(contour[0][1])
+        controller.move_point(contour[0])
+        controller.move_point(contour[1])
 
     # TODO: Go through each contour, patching the edges together after turning the pen off.
     rclpy.shutdown()
@@ -247,16 +269,15 @@ def PIDController(perimeter, origin=0.0):
 def main():
     # Step One: Get the contours
     contours = get_contours(
-       '/home/tcous/ros2_humble/src/TAMU_ctrl/TAMU_ctrl/img.jpg')
+       '/home/tcous/ros2_humble/src/TAMU_ctrl/TAMU_ctrl/img.png')
     #contours = get_contours('./img.jpg')
 
     # Step Two: Break the contours into lines (approxPolyDP)
     perimeter = approximatePoly(contours)
 
     #Step Three: Map these contours to real-values (bounding box method)
-    # adjusted = adjustContours(perimeter, bounds=[-5, 5, -5, 2.87])
+    adjusted = adjustContours(perimeter, bounds=[-5, 5, -5, 2.87])
     # adjusted = adjustContours(perimeter, bounds=[-50, 50, -50, 50])
-    adjusted = perimeter
     # Step Four: Iterate through each of these contours and trace them using a PID controller.
     PIDController(adjusted, origin=0)
 
