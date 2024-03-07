@@ -41,24 +41,6 @@ class PID():
                             )  # bounds on the integral
         return control_effort
 
-    # For linear movement, we take into account both X and Y
-    def calculate_control2D(self, current_value):
-        # Have to do L1 norm to maintain directionality
-        error = (self.setpoint[0] - current_value[0]) + \
-            (self.setpoint[1] - current_value[1])
-
-        self.integral += error
-        derivative = error - self.prev_error
-
-        control_effort = self.kp * error + self.ki * \
-            self.integral + self.kd * derivative
-
-        self.prev_error = error
-
-        self.integral = max(-100, min(self.integral, 100)
-                            )  # bounds on the integral
-        return control_effort
-
 class TAMU_Controller(Node):
     def __init__(self):
         super().__init__('shape_drawer')
@@ -70,12 +52,12 @@ class TAMU_Controller(Node):
             Pose2D, "/pose", self.pose_callback, 10)
 
         # Setting PID controller parameters
-        self.angle_PID = PID(kp=1, ki=.00, kd=.00, setpoint=0)
-        self.linear_PID = PID(kp=1, ki=.00, kd=.00, setpoint=0)
+        self.angle_PID = PID(kp=1.5, ki=.00, kd=0.0, setpoint=0)
+        self.linear_PID = PID(kp=1.5, ki=.00, kd=0.0, setpoint=0)
 
         # Setting bounds on the upper limits of the controller outputs
-        self.max_rad = 17
-        self.max_vel = 10
+        self.max_rad = 3
+        self.max_vel = 3
 
         self.msg = Twist()
 
@@ -103,52 +85,34 @@ class TAMU_Controller(Node):
             (point[1]-self.current_pose.y), (point[0]-self.current_pose.x)))
         
         #Testing that the angle is in the proper direction
-        # l2Ang = np.sqrt((np.cos(angle)+self.current_pose.x-point[0])**2 + (np.sin(angle)+self.current_pose.y-point[1])**2)
-        # l2Base = np.sqrt((np.cos(self.current_pose.theta)+self.current_pose.x-point[0])**2 + (np.sin(self.current_pose.theta)+self.current_pose.y-point[1])**2)
-        # if l2Ang>l2Base:
-        #     angle-=math.pi
         self.angle_PID.set_point(angle)
         print("ANGLE SET POINT: ", angle)
-        controlArr = np.full([10], np.inf)  # Moving average filter
-        idx = 0
-        while np.abs(np.mean(controlArr)) > .01:
+        control = np.inf
+        error = np.inf
+        while np.abs(error) > .001:
             rclpy.spin_once(self)
             control = self.angle_PID.calculate_control(self.current_pose.theta)
-
+            error = self.angle_PID.prev_error
             self.msg.angular.z = float(
                 max(-self.max_rad, min(control, self.max_rad)))
             self.pub.publish(self.msg)
-            # print("Angular CONTROL: ", control, " Set Point: ", self.angle_PID.setpoint,
-            #       " Pose: ", self.current_pose, " Message: ", self.msg)
-            time.sleep(.05)  # Pose updates at 10 Hz
-            controlArr[idx] = control
-            idx += 1
-            if idx >= 10:
-                idx = 0
+            #time.sleep(.01)  # Pose updates at 10 Hz
         self.stop()
 
     def _linear(self, point):
         self.stop()
         print("Linear Point: ", point)
         self.linear_PID.set_point(point[0])
-        controlArr = np.full([10], np.inf)
-        idx = 0
+        control = np.inf
+        error = np.inf
         timeout = 100  # iterations before angle gets readjusted. To compensate for drift
-        while np.abs(np.mean(controlArr)) > .01:
+        while np.abs(error) > .001:
             rclpy.spin_once(self)
-            # control = self.linear_PID.calculate_control2D([self.current_pose.x, self.current_pose.y])
             control = self.linear_PID.calculate_control(self.current_pose.x)
+            error = self.linear_PID.prev_error
             control = float(max(-self.max_vel, min(control, self.max_vel)))
             self.msg.linear.x = np.sign(np.cos(self.current_pose.theta))*control #accounting for facing the opposite direction
-            # self.msg.linear.y = control #This only uses
             self.pub.publish(self.msg)
-            print("Linear CONTROL: ", control, " Set Point: ",
-                  self.linear_PID.setpoint, " Pose: ", self.current_pose)
-            time.sleep(.05)  # Pose updates at 10 Hz
-            controlArr[idx] = control
-            idx += 1
-            if idx >= 10:
-                idx = 0
             timeout -= 1
             if timeout == 0:
                 self._angle(point)
@@ -160,7 +124,6 @@ class TAMU_Controller(Node):
         self._linear(point)
 
     def pose_callback(self, data):
-        # print("Pose Updated: ", data)
         self.current_pose = data
 
     # Helper functions
@@ -239,7 +202,7 @@ def adjustContours(perimeter, bounds=[-5, 5, -5, 2.87]):
 
 def approximatePoly(contours):
     global image
-    epsilon = .5
+    epsilon = .75
     perimeter = []
     for contour in contours:
         perimeter.append(cv.approxPolyDP(contour, epsilon, True))
@@ -274,6 +237,7 @@ def PIDController(perimeter, origin=0.0):
                 initial = False
                 controller.set_pen(True)
         controller.move_point(contour[0][0])
+        controller.move_point(contour[0][1])
 
     # TODO: Go through each contour, patching the edges together after turning the pen off.
     rclpy.shutdown()
@@ -290,7 +254,8 @@ def main():
     perimeter = approximatePoly(contours)
 
     #Step Three: Map these contours to real-values (bounding box method)
-    adjusted = adjustContours(perimeter, bounds=[-5, 5, -5, 2.87])
+    # adjusted = adjustContours(perimeter, bounds=[-5, 5, -5, 2.87])
+    adjusted = adjustContours(perimeter, bounds=[-50, 50, -50, 50])
 
     # Step Four: Iterate through each of these contours and trace them using a PID controller.
     PIDController(adjusted, origin=0)
